@@ -5,17 +5,17 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
 
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.datasets.IPieDataSet;
 import com.github.mikephil.charting.renderer.PieChartRenderer;
+import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.utils.Utils;
 
 import java.util.List;
@@ -54,6 +54,11 @@ public class PieChart extends PieRadarChartBase<PieData> {
     private boolean mDrawHole = true;
 
     /**
+     * if true, the hole will see-through to the inner tips of the slices
+     */
+    private boolean mDrawSlicesUnderHole = false;
+
+    /**
      * if true, the values inside the piechart are drawn as percent values
      */
     private boolean mUsePercentValues = false;
@@ -84,7 +89,7 @@ public class PieChart extends PieRadarChartBase<PieData> {
      */
     private boolean mDrawCenterText = true;
 
-    private float mCenterTextRadiusPercent = 1.f;
+    private float mCenterTextRadiusPercent = 100.f;
 
     protected float mMaxAngle = 360f;
 
@@ -105,6 +110,7 @@ public class PieChart extends PieRadarChartBase<PieData> {
         super.init();
 
         mRenderer = new PieChartRenderer(this, mAnimator, mViewPortHandler);
+        mXAxis = null;
     }
 
     @Override
@@ -155,8 +161,7 @@ public class PieChart extends PieRadarChartBase<PieData> {
 
     @Override
     protected void calcMinMax() {
-        super.calcMinMax();
-
+        
         calcAngles();
     }
 
@@ -200,6 +205,8 @@ public class PieChart extends PieRadarChartBase<PieData> {
         mDrawAngles = new float[mData.getYValCount()];
         mAbsoluteAngles = new float[mData.getYValCount()];
 
+        float yValueSum = mData.getYValueSum();
+
         List<IPieDataSet> dataSets = mData.getDataSets();
 
         int cnt = 0;
@@ -210,7 +217,7 @@ public class PieChart extends PieRadarChartBase<PieData> {
 
             for (int j = 0; j < set.getEntryCount(); j++) {
 
-                mDrawAngles[cnt] = calcAngle(Math.abs(set.getEntryForIndex(j).getVal()));
+                mDrawAngles[cnt] = calcAngle(Math.abs(set.getEntryForIndex(j).getVal()), yValueSum);
 
                 if (cnt == 0) {
                     mAbsoluteAngles[cnt] = mDrawAngles[cnt];
@@ -255,7 +262,29 @@ public class PieChart extends PieRadarChartBase<PieData> {
      * @return
      */
     private float calcAngle(float value) {
-        return value / mData.getYValueSum() * mMaxAngle;
+        return calcAngle(value, mData.getYValueSum());
+    }
+
+    /**
+     * calculates the needed angle for a given value
+     *
+     * @param value
+     * @param yValueSum
+     * @return
+     */
+    private float calcAngle(float value, float yValueSum) {
+        return value / yValueSum * mMaxAngle;
+    }
+
+    /**
+     * This will throw an exception, PieChart has no XAxis object.
+     *
+     * @return
+     */
+    @Deprecated
+    @Override
+    public XAxis getXAxis() {
+        throw new RuntimeException("PieChart has no XAxis");
     }
 
     @Override
@@ -313,41 +342,29 @@ public class PieChart extends PieRadarChartBase<PieData> {
 
     /**
      * Sets the color for the hole that is drawn in the center of the PieChart
-     * (if enabled). NOTE: Use setHoleColorTransparent(boolean enabled) to make
-     * the hole transparent.
+     * (if enabled).
      *
      * @param color
      */
     public void setHoleColor(int color) {
-        ((PieChartRenderer) mRenderer).getPaintHole().setXfermode(null);
         ((PieChartRenderer) mRenderer).getPaintHole().setColor(color);
     }
 
     /**
-     * Set the hole in the center of the PieChart transparent. Thank you, code
-     * provided by:
-     *
-     * @param enable
-     * @link https://github.com/tbarthel-fr
+     * Enable or disable the visibility of the inner tips of the slices behind the hole
      */
-    public void setHoleColorTransparent(boolean enable) {
-        if (enable) {
-            ((PieChartRenderer) mRenderer).getPaintHole().setColor(0xFFFFFFFF);
-            ((PieChartRenderer) mRenderer).getPaintHole().setXfermode(
-                    new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-        } else {
-            ((PieChartRenderer) mRenderer).getPaintHole().setXfermode(null);
-        }
+    public void setDrawSlicesUnderHole(boolean enable) {
+        mDrawSlicesUnderHole = enable;
     }
 
     /**
-     * Returns true if the hole in the center of the PieChart is transparent,
+     * Returns true if the inner tips of the slices are visible behind the hole,
      * false if not.
      *
-     * @return true if hole is transparent.
+     * @return true if slices are visible behind the hole.
      */
-    public boolean isHoleTransparent() {
-        return ((PieChartRenderer) mRenderer).getPaintHole().getXfermode() != null;
+    public boolean isDrawSlicesUnderHoleEnabled() {
+        return mDrawSlicesUnderHole;
     }
 
     /**
@@ -531,7 +548,8 @@ public class PieChart extends PieRadarChartBase<PieData> {
     }
 
     /**
-     * Sets the amount of transparency the transparent circle should have 0 = fully transparent, 255 = fully opaque.
+     * Sets the amount of transparency the transparent circle should have 0 = fully transparent,
+     * 255 = fully opaque.
      * Default value is 100.
      *
      * @param alpha 0-255
@@ -589,7 +607,8 @@ public class PieChart extends PieRadarChartBase<PieData> {
     }
 
     /**
-     * the rectangular radius of the bounding box for the center text, as a percentage of the pie hole
+     * the rectangular radius of the bounding box for the center text, as a percentage of the pie
+     * hole
      * default 1.f (100%)
      */
     public void setCenterTextRadiusPercent(float percent) {
@@ -597,7 +616,8 @@ public class PieChart extends PieRadarChartBase<PieData> {
     }
 
     /**
-     * the rectangular radius of the bounding box for the center text, as a percentage of the pie hole
+     * the rectangular radius of the bounding box for the center text, as a percentage of the pie
+     * hole
      * default 1.f (100%)
      */
     public float getCenterTextRadiusPercent() {

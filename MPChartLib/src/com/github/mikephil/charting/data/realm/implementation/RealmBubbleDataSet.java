@@ -1,15 +1,13 @@
 package com.github.mikephil.charting.data.realm.implementation;
 
-import android.graphics.Color;
-
 import com.github.mikephil.charting.data.BubbleEntry;
 import com.github.mikephil.charting.data.realm.base.RealmBarLineScatterCandleBubbleDataSet;
 import com.github.mikephil.charting.interfaces.datasets.IBubbleDataSet;
 import com.github.mikephil.charting.utils.Utils;
 
+import io.realm.DynamicRealmObject;
 import io.realm.RealmObject;
 import io.realm.RealmResults;
-import io.realm.dynamic.DynamicRealmObject;
 
 /**
  * Created by Philipp Jahoda on 07/11/15.
@@ -21,6 +19,7 @@ public class RealmBubbleDataSet<T extends RealmObject> extends RealmBarLineScatt
     protected float mXMax;
     protected float mXMin;
     protected float mMaxSize;
+    protected boolean mNormalizeSize = true;
 
     private float mHighlightCircleWidth = 2.5f;
 
@@ -146,6 +145,15 @@ public class RealmBubbleDataSet<T extends RealmObject> extends RealmBarLineScatt
     @Override
     public float getMaxSize() {
         return mMaxSize;
+    }
+
+    @Override
+    public boolean isNormalizeSizeEnabled() {
+        return mNormalizeSize;
+    }
+
+    public void setNormalizeSizeEnabled(boolean normalizeSize) {
+        mNormalizeSize = normalizeSize;
     }
 
     private float yMin(BubbleEntry entry) {

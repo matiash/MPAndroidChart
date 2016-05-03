@@ -7,7 +7,6 @@ import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Path;
 import android.graphics.PointF;
-import android.util.Size;
 
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
@@ -33,17 +32,16 @@ public class XAxisRenderer extends AxisRenderer {
         mAxisLabelPaint.setTextSize(Utils.convertDpToPixel(10f));
     }
 
-    public void computeAxis(float xValAverageLength, List<String> xValues) {
+    public void computeAxis(float xValMaximumLength, List<String> xValues) {
 
         mAxisLabelPaint.setTypeface(mXAxis.getTypeface());
         mAxisLabelPaint.setTextSize(mXAxis.getTextSize());
 
         StringBuilder widthText = new StringBuilder();
 
-        int max = Math.round(xValAverageLength
-                + mXAxis.getSpaceBetweenLabels());
+        int xValChars = Math.round(xValMaximumLength);
 
-        for (int i = 0; i < max; i++) {
+        for (int i = 0; i < xValChars; i++) {
             widthText.append('h');
         }
 
@@ -57,9 +55,18 @@ public class XAxisRenderer extends AxisRenderer {
                 labelHeight,
                 mXAxis.getLabelRotationAngle());
 
-        mXAxis.mLabelWidth = Math.round(labelWidth);
+        StringBuilder space = new StringBuilder();
+        int xValSpaceChars = mXAxis.getSpaceBetweenLabels();
+
+        for (int i = 0; i < xValSpaceChars; i++) {
+            space.append('h');
+        }
+
+        final FSize spaceSize = Utils.calcTextSize(mAxisLabelPaint, space.toString());
+
+        mXAxis.mLabelWidth = Math.round(labelWidth + spaceSize.width);
         mXAxis.mLabelHeight = Math.round(labelHeight);
-        mXAxis.mLabelRotatedWidth = Math.round(labelRotatedSize.width);
+        mXAxis.mLabelRotatedWidth = Math.round(labelRotatedSize.width + spaceSize.width);
         mXAxis.mLabelRotatedHeight = Math.round(labelRotatedSize.height);
 
         mXAxis.setValues(xValues);
@@ -181,7 +188,7 @@ public class XAxisRenderer extends AxisRenderer {
 
     protected void drawLabel(Canvas c, String label, int xIndex, float x, float y, PointF anchor, float angleDegrees) {
         String formattedLabel = mXAxis.getValueFormatter().getXValue(label, xIndex, mViewPortHandler);
-        Utils.drawText(c, formattedLabel, x, y, mAxisLabelPaint, anchor, angleDegrees);
+        Utils.drawXAxisValue(c, formattedLabel, x, y, mAxisLabelPaint, anchor, angleDegrees);
     }
 
     @Override

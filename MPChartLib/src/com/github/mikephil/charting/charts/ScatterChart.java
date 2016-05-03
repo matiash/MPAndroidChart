@@ -18,12 +18,10 @@ import com.github.mikephil.charting.renderer.ScatterChartRenderer;
 public class ScatterChart extends BarLineChartBase<ScatterData> implements ScatterDataProvider {
 
     /**
-     * enum that defines the shape that is drawn where the values are, CIRCLE
-     * and SCQUARE offer the best performance, TRIANGLE has the worst
-     * performance.
+     * enum that defines the shape that is drawn where the values are
      */
     public enum ScatterShape {
-        CROSS, TRIANGLE, CIRCLE, SQUARE
+        SQUARE, CIRCLE, TRIANGLE, CROSS, X,
     }
 
     public ScatterChart(Context context) {
@@ -43,18 +41,18 @@ public class ScatterChart extends BarLineChartBase<ScatterData> implements Scatt
         super.init();
 
         mRenderer = new ScatterChartRenderer(this, mAnimator, mViewPortHandler);
-        mXChartMin = -0.5f;
+        mXAxis.mAxisMinimum = -0.5f;
     }
 
     @Override
     protected void calcMinMax() {
         super.calcMinMax();
 
-        if (mDeltaX == 0 && mData.getYValCount() > 0)
-            mDeltaX = 1;
+        if (mXAxis.mAxisRange == 0 && mData.getYValCount() > 0)
+            mXAxis.mAxisRange = 1;
 
-        mXChartMax += 0.5f;
-        mDeltaX = Math.abs(mXChartMax - mXChartMin);
+        mXAxis.mAxisMaximum += 0.5f;
+        mXAxis.mAxisRange = Math.abs(mXAxis.mAxisMaximum - mXAxis.mAxisMinimum);
     }
 
     /**

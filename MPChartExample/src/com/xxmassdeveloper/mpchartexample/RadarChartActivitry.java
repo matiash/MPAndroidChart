@@ -56,6 +56,11 @@ public class RadarChartActivitry extends DemoBase {
 
         setData();
 
+        mChart.animateXY(
+                1400, 1400,
+                Easing.EasingOption.EaseInOutQuad,
+                Easing.EasingOption.EaseInOutQuad);
+
         XAxis xAxis = mChart.getXAxis();
         xAxis.setTypeface(tf);
         xAxis.setTextSize(9f);
@@ -64,7 +69,7 @@ public class RadarChartActivitry extends DemoBase {
         yAxis.setTypeface(tf);
         yAxis.setLabelCount(5, false);
         yAxis.setTextSize(9f);
-        yAxis.setStartAtZero(true);
+        yAxis.setAxisMinValue(0f);
 
         Legend l = mChart.getLegend();
         l.setPosition(LegendPosition.RIGHT_OF_CHART);
@@ -119,6 +124,17 @@ public class RadarChartActivitry extends DemoBase {
                 mChart.invalidate();
                 break;
             }
+            case R.id.actionToggleHighlightCircle: {
+
+                ArrayList<IRadarDataSet> sets = (ArrayList<IRadarDataSet>) mChart.getData()
+                        .getDataSets();
+
+                for (IRadarDataSet set : sets) {
+                    set.setDrawHighlightCircleEnabled(!set.isDrawHighlightCircleEnabled());
+                }
+                mChart.invalidate();
+                break;
+            }
             case R.id.actionSave: {
                 if (mChart.saveToPath("title" + System.currentTimeMillis(), "")) {
                     Toast.makeText(getApplicationContext(), "Saving SUCCESSFUL!",
@@ -138,6 +154,18 @@ public class RadarChartActivitry extends DemoBase {
 
                 mChart.getYAxis().setEnabled(!mChart.getYAxis().isEnabled());
                 mChart.invalidate();
+                break;
+            }
+            case R.id.animateX: {
+                mChart.animateX(1400);
+                break;
+            }
+            case R.id.animateY: {
+                mChart.animateY(1400);
+                break;
+            }
+            case R.id.animateXY: {
+                mChart.animateXY(1400, 1400);
                 break;
             }
             case R.id.actionToggleSpin: {
@@ -179,11 +207,13 @@ public class RadarChartActivitry extends DemoBase {
 
         RadarDataSet set1 = new RadarDataSet(yVals1, "Set 1");
         set1.setColor(ColorTemplate.VORDIPLOM_COLORS[0]);
+        set1.setFillColor(ColorTemplate.VORDIPLOM_COLORS[0]);
         set1.setDrawFilled(true);
         set1.setLineWidth(2f);
 
         RadarDataSet set2 = new RadarDataSet(yVals2, "Set 2");
         set2.setColor(ColorTemplate.VORDIPLOM_COLORS[4]);
+        set2.setFillColor(ColorTemplate.VORDIPLOM_COLORS[4]);
         set2.setDrawFilled(true);
         set2.setLineWidth(2f);
 

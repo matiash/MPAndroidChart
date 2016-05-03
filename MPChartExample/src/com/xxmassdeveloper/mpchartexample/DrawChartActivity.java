@@ -84,7 +84,7 @@ public class DrawChartActivity extends DemoBase implements OnChartValueSelectedL
         // create a dataset and give it a type (0)
         LineDataSet set1 = new LineDataSet(yVals, "DataSet");
         set1.setLineWidth(3f);
-        set1.setCircleSize(5f);
+        set1.setCircleRadius(5f);
 
         ArrayList<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
         dataSets.add(set1); // add the datasets
@@ -123,12 +123,6 @@ public class DrawChartActivity extends DemoBase implements OnChartValueSelectedL
                     mChart.getData().setHighlightEnabled(!mChart.getData().isHighlightEnabled());
                     mChart.invalidate();
                 }
-                break;
-            }
-            case R.id.actionToggleStartzero: {
-                mChart.getAxisLeft().setStartAtZero(!mChart.getAxisLeft().isStartAtZeroEnabled());
-                mChart.getAxisRight().setStartAtZero(!mChart.getAxisRight().isStartAtZeroEnabled());
-                mChart.invalidate();
                 break;
             }
             case R.id.actionTogglePinch: {

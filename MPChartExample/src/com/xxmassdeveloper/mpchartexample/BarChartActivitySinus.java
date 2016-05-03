@@ -87,17 +87,18 @@ public class BarChartActivitySinus extends DemoBase implements OnSeekBarChangeLi
         YAxis leftAxis = mChart.getAxisLeft();
         leftAxis.setTypeface(mTf);
         leftAxis.setLabelCount(6, false);
-        leftAxis.setStartAtZero(false);
         leftAxis.setAxisMinValue(-2.5f);
         leftAxis.setAxisMaxValue(2.5f);
+        leftAxis.setGranularityEnabled(true);
+        leftAxis.setGranularity(0.1f);
 
         YAxis rightAxis = mChart.getAxisRight();
         rightAxis.setDrawGridLines(false);
         rightAxis.setTypeface(mTf);
         rightAxis.setLabelCount(6, false);
-        rightAxis.setStartAtZero(false);
         rightAxis.setAxisMinValue(-2.5f);
         rightAxis.setAxisMaxValue(2.5f);
+        rightAxis.setGranularity(0.1f);
 
         mSeekBarX.setOnSeekBarChangeListener(this);
         mSeekBarX.setProgress(150); // set data
@@ -150,18 +151,18 @@ public class BarChartActivitySinus extends DemoBase implements OnSeekBarChangeLi
                 mChart.notifyDataSetChanged();
                 break;
             }
+            case R.id.actionToggleBarBorders: {
+                for (IBarDataSet set : mChart.getData().getDataSets())
+                    ((BarDataSet)set).setBarBorderWidth(set.getBarBorderWidth() == 1.f ? 0.f : 1.f);
+
+                mChart.invalidate();
+                break;
+            }
             case R.id.actionToggleHighlightArrow: {
                 if (mChart.isDrawHighlightArrowEnabled())
                     mChart.setDrawHighlightArrow(false);
                 else
                     mChart.setDrawHighlightArrow(true);
-                mChart.invalidate();
-                break;
-            }
-            case R.id.actionToggleStartzero: {
-                mChart.getAxisLeft().setStartAtZero(!mChart.getAxisLeft().isStartAtZeroEnabled());
-                mChart.getAxisRight().setStartAtZero(!mChart.getAxisRight().isStartAtZeroEnabled());
-                mChart.notifyDataSetChanged();
                 mChart.invalidate();
                 break;
             }
@@ -176,18 +177,6 @@ public class BarChartActivitySinus extends DemoBase implements OnSeekBarChangeLi
             case R.id.animateXY: {
 
                 mChart.animateXY(2000, 2000);
-                break;
-            }
-            case R.id.actionToggleFilter: {
-
-                Approximator a = new Approximator(ApproximatorType.DOUGLAS_PEUCKER, 25);
-
-                if (!mChart.isFilteringEnabled()) {
-                    mChart.enableFiltering(a);
-                } else {
-                    mChart.disableFiltering();
-                }
-                mChart.invalidate();
                 break;
             }
             case R.id.actionSave: {
@@ -234,16 +223,27 @@ public class BarChartActivitySinus extends DemoBase implements OnSeekBarChangeLi
             xVals.add(i+"");
             entries.add(mSinusData.get(i));
         }
-        
-        BarDataSet set = new BarDataSet(entries, "Sinus Function");
-        set.setBarSpacePercent(40f);
-        set.setColor(Color.rgb(240, 120, 124));
 
-        BarData data = new BarData(xVals, set);
-        data.setValueTextSize(10f);
-        data.setValueTypeface(mTf);
-        data.setDrawValues(false);
+        BarDataSet set;
 
-        mChart.setData(data);
+        if (mChart.getData() != null &&
+                mChart.getData().getDataSetCount() > 0) {
+            set = (BarDataSet)mChart.getData().getDataSetByIndex(0);
+            set.setYVals(entries);
+            mChart.getData().setXVals(xVals);
+            mChart.getData().notifyDataChanged();
+            mChart.notifyDataSetChanged();
+        } else {
+            set = new BarDataSet(entries, "Sinus Function");
+            set.setBarSpacePercent(40f);
+            set.setColor(Color.rgb(240, 120, 124));
+
+            BarData data = new BarData(xVals, set);
+            data.setValueTextSize(10f);
+            data.setValueTypeface(mTf);
+            data.setDrawValues(false);
+
+            mChart.setData(data);
+        }
     }
 }

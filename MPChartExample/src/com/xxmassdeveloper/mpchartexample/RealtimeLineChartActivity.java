@@ -88,7 +88,6 @@ public class RealtimeLineChartActivity extends DemoBase implements
         leftAxis.setTextColor(Color.WHITE);
         leftAxis.setAxisMaxValue(100f);
         leftAxis.setAxisMinValue(0f);
-        leftAxis.setStartAtZero(false);
         leftAxis.setDrawGridLines(true);
 
         YAxis rightAxis = mChart.getAxisRight();
@@ -168,7 +167,7 @@ public class RealtimeLineChartActivity extends DemoBase implements
         set.setColor(ColorTemplate.getHoloBlue());
         set.setCircleColor(Color.WHITE);
         set.setLineWidth(2f);
-        set.setCircleSize(4f);
+        set.setCircleRadius(4f);
         set.setFillAlpha(65);
         set.setFillColor(ColorTemplate.getHoloBlue());
         set.setHighLightColor(Color.rgb(244, 117, 117));

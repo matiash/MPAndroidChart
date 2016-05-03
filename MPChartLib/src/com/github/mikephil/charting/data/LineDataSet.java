@@ -4,6 +4,7 @@ package com.github.mikephil.charting.data;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
+import android.graphics.drawable.Drawable;
 
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
@@ -16,6 +17,9 @@ import java.util.List;
 
 public class LineDataSet extends LineRadarDataSet<Entry> implements ILineDataSet {
 
+    /** Drawing mode for this line dataset **/
+    private LineDataSet.Mode mMode = Mode.LINEAR;
+
     /** List representing all colors that are used for the circles */
     private List<Integer> mCircleColors = null;
 
@@ -23,7 +27,7 @@ public class LineDataSet extends LineRadarDataSet<Entry> implements ILineDataSet
     private int mCircleColorHole = Color.WHITE;
 
     /** the radius of the circle-shaped value indicators */
-    private float mCircleSize = 8f;
+    private float mCircleRadius = 8f;
 
     /** sets the intensity of the cubic lines */
     private float mCubicIntensity = 0.2f;
@@ -37,15 +41,13 @@ public class LineDataSet extends LineRadarDataSet<Entry> implements ILineDataSet
     /** if true, drawing circles is enabled */
     private boolean mDrawCircles = true;
 
-    /** if true, cubic lines are drawn instead of linear */
-    private boolean mDrawCubic = false;
-
     private boolean mDrawCircleHole = true;
+
 
     public LineDataSet(List<Entry> yVals, String label) {
         super(yVals, label);
 
-        // mCircleSize = Utils.convertDpToPixel(4f);
+        // mCircleRadius = Utils.convertDpToPixel(4f);
         // mLineWidth = Utils.convertDpToPixel(1f);
 
         mCircleColors = new ArrayList<Integer>();
@@ -66,15 +68,35 @@ public class LineDataSet extends LineRadarDataSet<Entry> implements ILineDataSet
         }
 
         LineDataSet copied = new LineDataSet(yVals, getLabel());
+        copied.mMode = mMode;
         copied.mColors = mColors;
-        copied.mCircleSize = mCircleSize;
+        copied.mCircleRadius = mCircleRadius;
         copied.mCircleColors = mCircleColors;
         copied.mDashPathEffect = mDashPathEffect;
         copied.mDrawCircles = mDrawCircles;
-        copied.mDrawCubic = mDrawCubic;
+        copied.mDrawCircleHole = mDrawCircleHole;
         copied.mHighLightColor = mHighLightColor;
 
         return copied;
+    }
+
+    /**
+     * Returns the drawing mode for this line dataset
+     *
+     * @return
+     */
+    @Override
+    public LineDataSet.Mode getMode() {
+        return mMode;
+    }
+
+    /**
+     * Returns the drawing mode for this line dataset
+     *
+     * @return
+     */
+    public void setMode(LineDataSet.Mode mode) {
+        mMode = mode;
     }
 
     /**
@@ -98,19 +120,43 @@ public class LineDataSet extends LineRadarDataSet<Entry> implements ILineDataSet
         return mCubicIntensity;
     }
 
+
     /**
-     * sets the size (radius) of the circle shpaed value indicators, default
-     * size = 4f
-     * 
-     * @param size
+     * sets the radius of the drawn circles.
+     * Default radius = 4f
+     *
+     * @param radius
      */
-    public void setCircleSize(float size) {
-        mCircleSize = Utils.convertDpToPixel(size);
+    public void setCircleRadius(float radius) {
+        mCircleRadius = Utils.convertDpToPixel(radius);
     }
 
     @Override
+    public float getCircleRadius() {
+        return mCircleRadius;
+    }
+
+    /**
+     * sets the size (radius) of the circle shpaed value indicators,
+     * default size = 4f
+     *
+     * This method is deprecated because of unclarity. Use setCircleRadius instead.
+     *
+     * @param size
+     */
+    @Deprecated
+    public void setCircleSize(float size) {
+        setCircleRadius(size);
+    }
+
+    /**
+     *
+     * This function is deprecated because of unclarity. Use getCircleRadius instead.
+     *
+     */
+    @Deprecated
     public float getCircleSize() {
-        return mCircleSize;
+        return getCircleRadius();
     }
 
     /**
@@ -160,19 +206,26 @@ public class LineDataSet extends LineRadarDataSet<Entry> implements ILineDataSet
         return mDrawCircles;
     }
 
-    /**
-     * If set to true, the linechart lines are drawn in cubic-style instead of
-     * linear. This affects performance! Default: false
-     * 
-     * @param enabled
-     */
+    @Deprecated
     public void setDrawCubic(boolean enabled) {
-        mDrawCubic = enabled;
+        mMode = enabled ? Mode.CUBIC_BEZIER : Mode.LINEAR;
     }
 
+    @Deprecated
     @Override
     public boolean isDrawCubicEnabled() {
-        return mDrawCubic;
+        return mMode == Mode.CUBIC_BEZIER;
+    }
+
+    @Deprecated
+    public void setDrawStepped(boolean enabled) {
+        mMode = enabled ? Mode.STEPPED : Mode.LINEAR;
+    }
+
+    @Deprecated
+    @Override
+    public boolean isDrawSteppedEnabled() {
+        return mMode == Mode.STEPPED;
     }
 
     /** ALL CODE BELOW RELATED TO CIRCLE-COLORS */
@@ -301,5 +354,12 @@ public class LineDataSet extends LineRadarDataSet<Entry> implements ILineDataSet
     @Override
     public FillFormatter getFillFormatter() {
         return mFillFormatter;
+    }
+
+    public enum Mode {
+        LINEAR,
+        STEPPED,
+        CUBIC_BEZIER,
+        HORIZONTAL_BEZIER
     }
 }

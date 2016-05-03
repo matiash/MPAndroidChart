@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.drawable.Drawable;
 
 import com.github.mikephil.charting.animation.ChartAnimator;
 import com.github.mikephil.charting.charts.RadarChart;
@@ -13,10 +14,11 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.RadarData;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.datasets.IRadarDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.utils.Utils;
 import com.github.mikephil.charting.utils.ViewPortHandler;
 
-public class RadarChartRenderer extends LineScatterCandleRadarRenderer {
+public class RadarChartRenderer extends LineRadarRenderer {
 
     protected RadarChart mChart;
 
@@ -24,6 +26,7 @@ public class RadarChartRenderer extends LineScatterCandleRadarRenderer {
      * paint for drawing the web
      */
     protected Paint mWebPaint;
+    protected Paint mHighlightCirclePaint;
 
     public RadarChartRenderer(RadarChart chart, ChartAnimator animator,
                               ViewPortHandler viewPortHandler) {
@@ -37,6 +40,8 @@ public class RadarChartRenderer extends LineScatterCandleRadarRenderer {
 
         mWebPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mWebPaint.setStyle(Paint.Style.STROKE);
+
+        mHighlightCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     }
 
     public Paint getWebPaint() {
@@ -54,14 +59,33 @@ public class RadarChartRenderer extends LineScatterCandleRadarRenderer {
 
         RadarData radarData = mChart.getData();
 
+        int mostEntries = 0;
+
+        for (IRadarDataSet set : radarData.getDataSets()) {
+            if (set.getEntryCount() > mostEntries) {
+                mostEntries = set.getEntryCount();
+            }
+        }
+
         for (IRadarDataSet set : radarData.getDataSets()) {
 
-            if (set.isVisible() && set.getEntryCount() > 0)
-                drawDataSet(c, set);
+            if (set.isVisible() && set.getEntryCount() > 0) {
+                drawDataSet(c, set, mostEntries);
+            }
         }
     }
 
-    protected void drawDataSet(Canvas c, IRadarDataSet dataSet) {
+    /**
+     * Draws the RadarDataSet
+     *
+     * @param c
+     * @param dataSet
+     * @param mostEntries the entry count of the dataset with the most entries
+     */
+    protected void drawDataSet(Canvas c, IRadarDataSet dataSet, int mostEntries) {
+
+        float phaseX = mAnimator.getPhaseX();
+        float phaseY = mAnimator.getPhaseY();
 
         float sliceangle = mChart.getSliceAngle();
 
@@ -81,8 +105,10 @@ public class RadarChartRenderer extends LineScatterCandleRadarRenderer {
 
             Entry e = dataSet.getEntryForIndex(j);
 
-            PointF p = Utils.getPosition(center, (e.getVal() - mChart.getYChartMin()) * factor,
-                    sliceangle * j + mChart.getRotationAngle());
+            PointF p = Utils.getPosition(
+                    center,
+                    (e.getVal() - mChart.getYChartMin()) * factor * phaseY,
+                    sliceangle * j * phaseX + mChart.getRotationAngle());
 
             if (Float.isNaN(p.x))
                 continue;
@@ -94,14 +120,23 @@ public class RadarChartRenderer extends LineScatterCandleRadarRenderer {
                 surface.lineTo(p.x, p.y);
         }
 
+        if (dataSet.getEntryCount() > mostEntries) {
+            // if this is not the largest set, draw a line to the center before closing
+            surface.lineTo(center.x, center.y);
+        }
+
         surface.close();
 
-        // draw filled
-        if (dataSet.isDrawFilledEnabled()) {
-            mRenderPaint.setStyle(Paint.Style.FILL);
-            mRenderPaint.setAlpha(dataSet.getFillAlpha());
-            c.drawPath(surface, mRenderPaint);
-            mRenderPaint.setAlpha(255);
+        if(dataSet.isDrawFilledEnabled()) {
+
+            final Drawable drawable = dataSet.getFillDrawable();
+            if (drawable != null) {
+
+                drawFilledPath(c, surface, drawable);
+            } else {
+
+                drawFilledPath(c, surface, dataSet.getFillColor(), dataSet.getFillAlpha());
+            }
         }
 
         mRenderPaint.setStrokeWidth(dataSet.getLineWidth());
@@ -110,10 +145,21 @@ public class RadarChartRenderer extends LineScatterCandleRadarRenderer {
         // draw the line (only if filled is disabled or alpha is below 255)
         if (!dataSet.isDrawFilledEnabled() || dataSet.getFillAlpha() < 255)
             c.drawPath(surface, mRenderPaint);
+//
+//        // draw filled
+//        if (dataSet.isDrawFilledEnabled()) {
+//            mRenderPaint.setStyle(Paint.Style.FILL);
+//            mRenderPaint.setAlpha(dataSet.getFillAlpha());
+//            c.drawPath(surface, mRenderPaint);
+//            mRenderPaint.setAlpha(255);
+//        }
     }
 
     @Override
     public void drawValues(Canvas c) {
+
+        float phaseX = mAnimator.getPhaseX();
+        float phaseY = mAnimator.getPhaseY();
 
         float sliceangle = mChart.getSliceAngle();
 
@@ -139,10 +185,12 @@ public class RadarChartRenderer extends LineScatterCandleRadarRenderer {
 
                 Entry entry = dataSet.getEntryForIndex(j);
 
-                PointF p = Utils.getPosition(center, (entry.getVal() - mChart.getYChartMin()) * factor,
-                        sliceangle * j + mChart.getRotationAngle());
+                PointF p = Utils.getPosition(
+                        center,
+                        (entry.getVal() - mChart.getYChartMin()) * factor * phaseY,
+                        sliceangle * j * phaseX + mChart.getRotationAngle());
 
-                drawValue(c, dataSet.getValueFormatter(), entry.getVal(), entry, i, p.x, p.y - yoffset);
+                drawValue(c, dataSet.getValueFormatter(), entry.getVal(), entry, i, p.x, p.y - yoffset, dataSet.getValueTextColor(j));
             }
         }
     }
@@ -172,8 +220,10 @@ public class RadarChartRenderer extends LineScatterCandleRadarRenderer {
 
         for (int i = 0; i < mChart.getData().getXValCount(); i += xIncrements) {
 
-            PointF p = Utils.getPosition(center, mChart.getYRange() * factor, sliceangle * i
-                    + rotationangle);
+            PointF p = Utils.getPosition(
+                    center,
+                    mChart.getYRange() * factor,
+                    sliceangle * i + rotationangle);
 
             c.drawLine(center.x, center.y, p.x, p.y, mWebPaint);
         }
@@ -202,6 +252,9 @@ public class RadarChartRenderer extends LineScatterCandleRadarRenderer {
     @Override
     public void drawHighlighted(Canvas c, Highlight[] indices) {
 
+        float phaseX = mAnimator.getPhaseX();
+        float phaseY = mAnimator.getPhaseY();
+
         float sliceangle = mChart.getSliceAngle();
         float factor = mChart.getFactor();
 
@@ -229,8 +282,10 @@ public class RadarChartRenderer extends LineScatterCandleRadarRenderer {
             if (Float.isNaN(y))
                 continue;
 
-            PointF p = Utils.getPosition(center, y * factor,
-                    sliceangle * j + mChart.getRotationAngle());
+            PointF p = Utils.getPosition(
+                    center,
+                    y * factor * phaseY,
+                    sliceangle * j * phaseX + mChart.getRotationAngle());
 
             float[] pts = new float[]{
                     p.x, p.y
@@ -238,7 +293,62 @@ public class RadarChartRenderer extends LineScatterCandleRadarRenderer {
 
             // draw the lines
             drawHighlightLines(c, pts, set);
+
+            if (set.isDrawHighlightCircleEnabled()) {
+
+                if (!Float.isNaN(pts[0]) && !Float.isNaN(pts[1])) {
+
+                    int strokeColor = set.getHighlightCircleStrokeColor();
+                    if (strokeColor == ColorTemplate.COLOR_NONE) {
+                        strokeColor = set.getColor(0);
+                    }
+
+                    if (set.getHighlightCircleStrokeAlpha() < 255) {
+                        strokeColor = ColorTemplate.getColorWithAlphaComponent(strokeColor, set.getHighlightCircleStrokeAlpha());
+                    }
+
+                    drawHighlightCircle(c,
+                            p,
+                            set.getHighlightCircleInnerRadius(),
+                            set.getHighlightCircleOuterRadius(),
+                            set.getHighlightCircleFillColor(),
+                            strokeColor,
+                            set.getHighlightCircleStrokeWidth());
+                }
+            }
         }
     }
 
+    public void drawHighlightCircle(Canvas c,
+                                PointF point,
+                                float innerRadius,
+                                float outerRadius,
+                                int fillColor,
+                                int strokeColor,
+                                float strokeWidth) {
+        c.save();
+
+        outerRadius = Utils.convertDpToPixel(outerRadius);
+        innerRadius = Utils.convertDpToPixel(innerRadius);
+
+        if (fillColor != ColorTemplate.COLOR_NONE) {
+            Path p = new Path();
+            p.addCircle(point.x, point.y, outerRadius, Path.Direction.CW);
+            if (innerRadius > 0.f) {
+                p.addCircle(point.x, point.y, innerRadius, Path.Direction.CCW);
+            }
+            mHighlightCirclePaint.setColor(fillColor);
+            mHighlightCirclePaint.setStyle(Paint.Style.FILL);
+            c.drawPath(p, mHighlightCirclePaint);
+        }
+
+        if (strokeColor != ColorTemplate.COLOR_NONE) {
+            mHighlightCirclePaint.setColor(strokeColor);
+            mHighlightCirclePaint.setStyle(Paint.Style.STROKE);
+            mHighlightCirclePaint.setStrokeWidth(Utils.convertDpToPixel(strokeWidth));
+            c.drawCircle(point.x, point.y, outerRadius, mHighlightCirclePaint);
+        }
+
+        c.restore();
+    }
 }

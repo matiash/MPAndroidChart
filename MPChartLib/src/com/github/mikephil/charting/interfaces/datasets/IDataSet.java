@@ -113,6 +113,17 @@ public interface IDataSet<T extends Entry> {
     float getYValForXIndex(int xIndex);
 
     /**
+     * This method returns the actual
+     * index in the Entry array of the DataSet for a given xIndex. IMPORTANT: This method does
+     * calculations at runtime, do not over-use in performance critical
+     * situations.
+     *
+     * @param xIndex
+     * @return
+     */
+    int getIndexInEntries(int xIndex);
+
+    /**
      * Adds an Entry to the DataSet dynamically.
      * Entries are added to the end of the list.
      * This will also recalculate the current minimum and maximum
@@ -131,6 +142,55 @@ public interface IDataSet<T extends Entry> {
      * @param e
      */
     boolean removeEntry(T e);
+
+    /**
+     * Adds an Entry to the DataSet dynamically.
+     * Entries are added to their appropriate index respective to it's x-index.
+     * This will also recalculate the current minimum and maximum
+     * values of the DataSet and the value-sum.
+     *
+     * @param e
+     */
+    void addEntryOrdered(T e);
+
+    /**
+     * Removes the first Entry (at index 0) of this DataSet from the entries array.
+     * Returns true if successful, false if not.
+     *
+     * @return
+     */
+    boolean removeFirst();
+
+    /**
+     * Removes the last Entry (at index size-1) of this DataSet from the entries array.
+     * Returns true if successful, false if not.
+     *
+     * @return
+     */
+    boolean removeLast();
+
+    /**
+     * Removes the Entry object that has the given xIndex from the DataSet.
+     * Returns true if an Entry was removed, false if no Entry could be removed.
+     *
+     * @param xIndex
+     */
+    boolean removeEntry(int xIndex);
+
+    /**
+     * Checks if this DataSet contains the specified Entry. Returns true if so,
+     * false if not. NOTE: Performance is pretty bad on this one, do not
+     * over-use in performance critical situations.
+     *
+     * @param entry
+     * @return
+     */
+    boolean contains(T entry);
+
+    /**
+     * Removes all values from this DataSet and does all necessary recalculations.
+     */
+    void clear();
 
 
     /** ###### ###### STYLING RELATED (& OTHER) METHODS ###### ###### */
@@ -229,6 +289,13 @@ public interface IDataSet<T extends Entry> {
     void setValueTextColor(int color);
 
     /**
+     * Sets a list of colors to be used as the colors for the drawn values.
+     *
+     * @param colors
+     */
+    void setValueTextColors(List<Integer> colors);
+
+    /**
      * Sets a Typeface for the value-labels of this DataSet.
      *
      * @param tf
@@ -243,11 +310,20 @@ public interface IDataSet<T extends Entry> {
     void setValueTextSize(float size);
 
     /**
-     * Returns the color that is used for drawing the values inside the chart
+     * Returns only the first color of all colors that are set to be used for the values.
      *
      * @return
      */
     int getValueTextColor();
+
+    /**
+     * Returns the color at the specified index that is used for drawing the values inside the chart.
+     * Uses modulus internally.
+     *
+     * @param index
+     * @return
+     */
+    int getValueTextColor(int index);
 
     /**
      * Returns the typeface that is used for drawing the values inside the chart

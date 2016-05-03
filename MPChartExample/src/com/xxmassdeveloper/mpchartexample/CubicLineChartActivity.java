@@ -3,7 +3,9 @@ package com.xxmassdeveloper.mpchartexample;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
@@ -57,7 +59,7 @@ public class CubicLineChartActivity extends DemoBase implements OnSeekBarChangeL
         mSeekBarX.setOnSeekBarChangeListener(this);
 
         mChart = (LineChart) findViewById(R.id.chart1);
-        mChart.setViewPortOffsets(0, 20, 0, 0);
+        mChart.setViewPortOffsets(0, 0, 0, 0);
         mChart.setBackgroundColor(Color.rgb(104, 241, 175));
 
         // no description text
@@ -83,7 +85,6 @@ public class CubicLineChartActivity extends DemoBase implements OnSeekBarChangeL
         YAxis y = mChart.getAxisLeft();
         y.setTypeface(tf);
         y.setLabelCount(6, false);
-        y.setStartAtZero(false);
         y.setTextColor(Color.WHITE);
         y.setPosition(YAxis.YAxisLabelPosition.INSIDE_CHART);
         y.setDrawGridLines(false);
@@ -165,17 +166,38 @@ public class CubicLineChartActivity extends DemoBase implements OnSeekBarChangeL
                 for (ILineDataSet iSet : sets) {
 
                     LineDataSet set = (LineDataSet) iSet;
-                    if (set.isDrawCubicEnabled())
-                        set.setDrawCubic(false);
-                    else
-                        set.setDrawCubic(true);
+                    set.setMode(set.getMode() == LineDataSet.Mode.CUBIC_BEZIER
+                            ? LineDataSet.Mode.LINEAR
+                            :  LineDataSet.Mode.CUBIC_BEZIER);
                 }
                 mChart.invalidate();
                 break;
             }
-            case R.id.actionToggleStartzero: {
-                mChart.getAxisLeft().setStartAtZero(!mChart.getAxisLeft().isStartAtZeroEnabled());
-                mChart.getAxisRight().setStartAtZero(!mChart.getAxisRight().isStartAtZeroEnabled());
+            case R.id.actionToggleStepped: {
+                List<ILineDataSet> sets = mChart.getData()
+                        .getDataSets();
+
+                for (ILineDataSet iSet : sets) {
+
+                    LineDataSet set = (LineDataSet) iSet;
+                    set.setMode(set.getMode() == LineDataSet.Mode.STEPPED
+                            ? LineDataSet.Mode.LINEAR
+                            :  LineDataSet.Mode.STEPPED);
+                }
+                mChart.invalidate();
+                break;
+            }
+            case R.id.actionToggleHorizontalCubic: {
+                List<ILineDataSet> sets = mChart.getData()
+                        .getDataSets();
+
+                for (ILineDataSet iSet : sets) {
+
+                    LineDataSet set = (LineDataSet) iSet;
+                    set.setMode(set.getMode() == LineDataSet.Mode.HORIZONTAL_BEZIER
+                            ? LineDataSet.Mode.LINEAR
+                            :  LineDataSet.Mode.HORIZONTAL_BEZIER);
+                }
                 mChart.invalidate();
                 break;
             }
@@ -203,19 +225,6 @@ public class CubicLineChartActivity extends DemoBase implements OnSeekBarChangeL
             }
             case R.id.animateXY: {
                 mChart.animateXY(3000, 3000);
-                break;
-            }
-            case R.id.actionToggleFilter: {
-
-                // the angle of filtering is 35°
-                Approximator a = new Approximator(ApproximatorType.DOUGLAS_PEUCKER, 35);
-
-                if (!mChart.isFilteringEnabled()) {
-                    mChart.enableFiltering(a);
-                } else {
-                    mChart.disableFiltering();
-                }
-                mChart.invalidate();            
                 break;
             }
             case R.id.actionSave: {
@@ -264,44 +273,55 @@ public class CubicLineChartActivity extends DemoBase implements OnSeekBarChangeL
             xVals.add((1990 +i) + "");
         }
 
-        ArrayList<Entry> vals1 = new ArrayList<Entry>();
+        ArrayList<Entry> yVals = new ArrayList<Entry>();
 
         for (int i = 0; i < count; i++) {
             float mult = (range + 1);
             float val = (float) (Math.random() * mult) + 20;// + (float)
                                                            // ((mult *
                                                            // 0.1) / 10);
-            vals1.add(new Entry(val, i));
+            yVals.add(new Entry(val, i));
         }
-        
-        // create a dataset and give it a type
-        LineDataSet set1 = new LineDataSet(vals1, "DataSet 1");
-        set1.setDrawCubic(true);
-        set1.setCubicIntensity(0.2f);
-        //set1.setDrawFilled(true);
-        set1.setDrawCircles(false); 
-        set1.setLineWidth(1.8f);
-        set1.setCircleSize(4f);
-        set1.setCircleColor(Color.WHITE);
-        set1.setHighLightColor(Color.rgb(244, 117, 117));
-        set1.setColor(Color.WHITE);
-        set1.setFillColor(Color.WHITE);
-        set1.setFillAlpha(100);
-        set1.setDrawHorizontalHighlightIndicator(false);
-        set1.setFillFormatter(new FillFormatter() {
-            @Override
-            public float getFillLinePosition(ILineDataSet dataSet, LineDataProvider dataProvider) {
-                return -10;
-            }
-        });
-        
-        // create a data object with the datasets
-        LineData data = new LineData(xVals, set1);
-        data.setValueTypeface(tf);
-        data.setValueTextSize(9f);
-        data.setDrawValues(false);
 
-        // set data
-        mChart.setData(data);
+        LineDataSet set1;
+
+        if (mChart.getData() != null &&
+                mChart.getData().getDataSetCount() > 0) {
+            set1 = (LineDataSet)mChart.getData().getDataSetByIndex(0);
+            set1.setYVals(yVals);
+            mChart.getData().setXVals(xVals);
+            mChart.notifyDataSetChanged();
+        } else {
+            // create a dataset and give it a type
+            set1 = new LineDataSet(yVals, "DataSet 1");
+
+            set1.setDrawCubic(true);
+            set1.setCubicIntensity(0.2f);
+            //set1.setDrawFilled(true);
+            set1.setDrawCircles(false);
+            set1.setLineWidth(1.8f);
+            set1.setCircleRadius(4f);
+            set1.setCircleColor(Color.WHITE);
+            set1.setHighLightColor(Color.rgb(244, 117, 117));
+            set1.setColor(Color.WHITE);
+            set1.setFillColor(Color.WHITE);
+            set1.setFillAlpha(100);
+            set1.setDrawHorizontalHighlightIndicator(false);
+            set1.setFillFormatter(new FillFormatter() {
+                @Override
+                public float getFillLinePosition(ILineDataSet dataSet, LineDataProvider dataProvider) {
+                    return -10;
+                }
+            });
+
+            // create a data object with the datasets
+            LineData data = new LineData(xVals, set1);
+            data.setValueTypeface(tf);
+            data.setValueTextSize(9f);
+            data.setDrawValues(false);
+
+            // set data
+            mChart.setData(data);
+        }
     }
 }

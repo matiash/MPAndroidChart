@@ -3,8 +3,9 @@ package com.github.mikephil.charting.data.realm.implementation;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
+import android.graphics.drawable.Drawable;
 
-import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.data.realm.base.RealmLineRadarDataSet;
 import com.github.mikephil.charting.formatter.DefaultFillFormatter;
 import com.github.mikephil.charting.formatter.FillFormatter;
@@ -17,12 +18,14 @@ import java.util.List;
 
 import io.realm.RealmObject;
 import io.realm.RealmResults;
-import io.realm.dynamic.DynamicRealmObject;
 
 /**
  * Created by Philipp Jahoda on 21/10/15.
  */
 public class RealmLineDataSet<T extends RealmObject> extends RealmLineRadarDataSet<T> implements ILineDataSet {
+
+    /** Drawing mode for this line dataset **/
+    private LineDataSet.Mode mMode = LineDataSet.Mode.LINEAR;
 
     /**
      * List representing all colors that are used for the circles
@@ -59,13 +62,7 @@ public class RealmLineDataSet<T extends RealmObject> extends RealmLineRadarDataS
      */
     private boolean mDrawCircles = true;
 
-    /**
-     * if true, cubic lines are drawn instead of linear
-     */
-    private boolean mDrawCubic = false;
-
     private boolean mDrawCircleHole = true;
-
 
     /**
      * Constructor for creating a LineDataSet with realm data.
@@ -108,6 +105,25 @@ public class RealmLineDataSet<T extends RealmObject> extends RealmLineRadarDataS
     }
 
     /**
+     * Returns the drawing mode for this line dataset
+     *
+     * @return
+     */
+    @Override
+    public LineDataSet.Mode getMode() {
+        return mMode;
+    }
+
+    /**
+     * Returns the drawing mode for this line dataset
+     *
+     * @return
+     */
+    public void setMode(LineDataSet.Mode mode) {
+        mMode = mode;
+    }
+
+    /**
      * Sets the intensity for cubic lines (if enabled). Max = 1f = very cubic,
      * Min = 0.05f = low cubic effect, Default: 0.2f
      *
@@ -139,7 +155,7 @@ public class RealmLineDataSet<T extends RealmObject> extends RealmLineRadarDataS
     }
 
     @Override
-    public float getCircleSize() {
+    public float getCircleRadius() {
         return mCircleSize;
     }
 
@@ -190,19 +206,26 @@ public class RealmLineDataSet<T extends RealmObject> extends RealmLineRadarDataS
         return mDrawCircles;
     }
 
-    /**
-     * If set to true, the linechart lines are drawn in cubic-style instead of
-     * linear. This affects performance! Default: false
-     *
-     * @param enabled
-     */
+    @Deprecated
     public void setDrawCubic(boolean enabled) {
-        mDrawCubic = enabled;
+        mMode = enabled ? LineDataSet.Mode.CUBIC_BEZIER : LineDataSet.Mode.LINEAR;
     }
 
+    @Deprecated
     @Override
     public boolean isDrawCubicEnabled() {
-        return mDrawCubic;
+        return mMode == LineDataSet.Mode.CUBIC_BEZIER;
+    }
+
+    @Deprecated
+    public void setDrawStepped(boolean enabled) {
+        mMode = enabled ? LineDataSet.Mode.STEPPED : LineDataSet.Mode.LINEAR;
+    }
+
+    @Deprecated
+    @Override
+    public boolean isDrawSteppedEnabled() {
+        return mMode == LineDataSet.Mode.STEPPED;
     }
 
     /** ALL CODE BELOW RELATED TO CIRCLE-COLORS */

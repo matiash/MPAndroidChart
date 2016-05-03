@@ -31,6 +31,7 @@ public class BarChartRenderer extends DataRenderer {
     protected BarBuffer[] mBarBuffers;
 
     protected Paint mShadowPaint;
+    protected Paint mBarBorderPaint;
 
     public BarChartRenderer(BarDataProvider chart, ChartAnimator animator,
             ViewPortHandler viewPortHandler) {
@@ -45,6 +46,9 @@ public class BarChartRenderer extends DataRenderer {
 
         mShadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mShadowPaint.setStyle(Paint.Style.FILL);
+
+        mBarBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarBorderPaint.setStyle(Paint.Style.STROKE);
     }
 
     @Override
@@ -81,6 +85,10 @@ public class BarChartRenderer extends DataRenderer {
         Transformer trans = mChart.getTransformer(dataSet.getAxisDependency());
 
         mShadowPaint.setColor(dataSet.getBarShadowColor());
+        mBarBorderPaint.setColor(dataSet.getBarBorderColor());
+        mBarBorderPaint.setStrokeWidth(dataSet.getBarBorderWidth());
+
+        final boolean drawBorder = dataSet.getBarBorderWidth() > 0.f;
 
         float phaseX = mAnimator.getPhaseX();
         float phaseY = mAnimator.getPhaseY();
@@ -96,6 +104,23 @@ public class BarChartRenderer extends DataRenderer {
 
         trans.pointValuesToPixel(buffer.buffer);
 
+        // draw the bar shadow before the values
+        if (mChart.isDrawBarShadowEnabled()) {
+
+            for (int j = 0; j < buffer.size(); j += 4) {
+
+                if (!mViewPortHandler.isInBoundsLeft(buffer.buffer[j + 2]))
+                    continue;
+
+                if (!mViewPortHandler.isInBoundsRight(buffer.buffer[j]))
+                    break;
+
+                c.drawRect(buffer.buffer[j], mViewPortHandler.contentTop(),
+                        buffer.buffer[j + 2],
+                        mViewPortHandler.contentBottom(), mShadowPaint);
+            }
+        }
+
         // if multiple colors
         if (dataSet.getColors().size() > 1) {
 
@@ -107,18 +132,16 @@ public class BarChartRenderer extends DataRenderer {
                 if (!mViewPortHandler.isInBoundsRight(buffer.buffer[j]))
                     break;
 
-                if (mChart.isDrawBarShadowEnabled()) {
-                    c.drawRect(buffer.buffer[j], mViewPortHandler.contentTop(),
-                            buffer.buffer[j + 2],
-                            mViewPortHandler.contentBottom(), mShadowPaint);
-                }
-
                 // Set the color for the currently drawn value. If the index
-                // is
-                // out of bounds, reuse colors.
+                // is out of bounds, reuse colors.
                 mRenderPaint.setColor(dataSet.getColor(j / 4));
                 c.drawRect(buffer.buffer[j], buffer.buffer[j + 1], buffer.buffer[j + 2],
                         buffer.buffer[j + 3], mRenderPaint);
+
+                if (drawBorder) {
+                    c.drawRect(buffer.buffer[j], buffer.buffer[j + 1], buffer.buffer[j + 2],
+                            buffer.buffer[j + 3], mBarBorderPaint);
+                }
             }
         } else {
 
@@ -132,14 +155,13 @@ public class BarChartRenderer extends DataRenderer {
                 if (!mViewPortHandler.isInBoundsRight(buffer.buffer[j]))
                     break;
 
-                if (mChart.isDrawBarShadowEnabled()) {
-                    c.drawRect(buffer.buffer[j], mViewPortHandler.contentTop(),
-                            buffer.buffer[j + 2],
-                            mViewPortHandler.contentBottom(), mShadowPaint);
-                }
-
                 c.drawRect(buffer.buffer[j], buffer.buffer[j + 1], buffer.buffer[j + 2],
                         buffer.buffer[j + 3], mRenderPaint);
+
+                if (drawBorder) {
+                    c.drawRect(buffer.buffer[j], buffer.buffer[j + 1], buffer.buffer[j + 2],
+                            buffer.buffer[j + 3], mBarBorderPaint);
+                }
             }
         }
     }
@@ -223,7 +245,7 @@ public class BarChartRenderer extends DataRenderer {
                         float val = entry.getVal();
 
                         drawValue(c, dataSet.getValueFormatter(), val, entry, i, valuePoints[j],
-                                valuePoints[j + 1] + (val >= 0 ? posOffset : negOffset));
+                                valuePoints[j + 1] + (val >= 0 ? posOffset : negOffset), dataSet.getValueTextColor(j / 2));
                     }
 
                     // if we have stacks
@@ -248,10 +270,12 @@ public class BarChartRenderer extends DataRenderer {
                                 continue;
 
                             drawValue(c, dataSet.getValueFormatter(), entry.getVal(), entry, i, valuePoints[j],
-                                    valuePoints[j + 1] + (entry.getVal() >= 0 ? posOffset : negOffset));
+                                    valuePoints[j + 1] + (entry.getVal() >= 0 ? posOffset : negOffset), dataSet.getValueTextColor(j / 2));
 
                             // draw stack values
                         } else {
+
+                            int color = dataSet.getValueTextColor(j / 2);
 
                             float[] transformed = new float[vals.length * 2];
 
@@ -289,7 +313,7 @@ public class BarChartRenderer extends DataRenderer {
                                         || !mViewPortHandler.isInBoundsLeft(x))
                                     continue;
 
-                                drawValue(c, dataSet.getValueFormatter(), vals[k / 2], entry, i, x, y);
+                                drawValue(c, dataSet.getValueFormatter(), vals[k / 2], entry, i, x, y, color);
                             }
                         }
                     }

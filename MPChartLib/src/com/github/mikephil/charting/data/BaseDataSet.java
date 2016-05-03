@@ -27,6 +27,11 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
     protected List<Integer> mColors = null;
 
     /**
+     * List representing all colors that are used for drawing the actual values for this DataSet
+     */
+    protected List<Integer> mValueColors = null;
+
+    /**
      * label that describes the DataSet or the data the DataSet represents
      */
     private String mLabel = "DataSet";
@@ -45,11 +50,6 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
      * custom formatter that is used instead of the auto-formatter if set
      */
     protected transient ValueFormatter mValueFormatter;
-
-    /**
-     * the color used for the value-text
-     */
-    protected int mValueColor = Color.BLACK;
 
     /**
      * the typeface used for the value text
@@ -75,10 +75,12 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
      * Default constructor.
      */
     public BaseDataSet() {
-        mColors = new ArrayList<>();
+        mColors = new ArrayList<Integer>();
+        mValueColors = new ArrayList<Integer>();
 
         // default color
         mColors.add(Color.rgb(140, 234, 255));
+        mValueColors.add(Color.BLACK);
     }
 
     /**
@@ -107,6 +109,8 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
     public List<Integer> getColors() {
         return mColors;
     }
+
+    public List<Integer> getValueColors() { return mValueColors; }
 
     @Override
     public int getColor() {
@@ -208,6 +212,7 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
      * @param alpha
      */
     public void setColors(int[] colors, int alpha) {
+        resetColors();
         for (int color : colors) {
             addColor(Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color)));
         }
@@ -260,7 +265,13 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
 
     @Override
     public void setValueTextColor(int color) {
-        mValueColor = color;
+        mValueColors.clear();
+        mValueColors.add(color);
+    }
+
+    @Override
+    public void setValueTextColors(List<Integer> colors) {
+        mValueColors = colors;
     }
 
     @Override
@@ -275,7 +286,12 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
 
     @Override
     public int getValueTextColor() {
-        return mValueColor;
+        return mValueColors.get(0);
+    }
+
+    @Override
+    public int getValueTextColor(int index) {
+        return mValueColors.get(index % mValueColors.size());
     }
 
     @Override
@@ -316,5 +332,51 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
     @Override
     public void setAxisDependency(YAxis.AxisDependency dependency) {
         mAxisDependency = dependency;
+    }
+
+
+    /** ###### ###### DATA RELATED METHODS ###### ###### */
+
+    @Override
+    public int getIndexInEntries(int xIndex) {
+
+        for (int i = 0; i < getEntryCount(); i++) {
+            if (xIndex == getEntryForIndex(i).getXIndex())
+                return i;
+        }
+
+        return -1;
+    }
+
+    @Override
+    public boolean removeFirst() {
+
+        T entry = getEntryForIndex(0);
+        return removeEntry(entry);
+    }
+
+    @Override
+    public boolean removeLast() {
+
+        T entry = getEntryForIndex(getEntryCount() - 1);
+        return removeEntry(entry);
+    }
+
+    @Override
+    public boolean removeEntry(int xIndex) {
+
+        T e = getEntryForXIndex(xIndex);
+        return removeEntry(e);
+    }
+
+    @Override
+    public boolean contains(T e) {
+
+        for(int i = 0; i < getEntryCount(); i++) {
+            if(getEntryForIndex(i).equals(e))
+                return true;
+        }
+
+        return false;
     }
 }

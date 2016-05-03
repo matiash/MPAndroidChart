@@ -88,6 +88,7 @@ public class InvertedLineChartActivity extends DemoBase implements OnSeekBarChan
         
         YAxis leftAxis = mChart.getAxisLeft();
         leftAxis.setInverted(true);
+        leftAxis.setAxisMinValue(0f); // this replaces setStartAtZero(true)
         
         YAxis rightAxis = mChart.getAxisRight();
         rightAxis.setEnabled(false);
@@ -173,12 +174,6 @@ public class InvertedLineChartActivity extends DemoBase implements OnSeekBarChan
                 mChart.invalidate();
                 break;
             }
-            case R.id.actionToggleStartzero: {
-                mChart.getAxisLeft().setStartAtZero(!mChart.getAxisLeft().isStartAtZeroEnabled());
-                mChart.getAxisRight().setStartAtZero(!mChart.getAxisRight().isStartAtZeroEnabled());
-                mChart.invalidate();
-                break;
-            }
             case R.id.animateX: {
                 mChart.animateX(3000);
                 break;
@@ -204,19 +199,6 @@ public class InvertedLineChartActivity extends DemoBase implements OnSeekBarChan
             case R.id.actionToggleAutoScaleMinMax: {
                 mChart.setAutoScaleMinMaxEnabled(!mChart.isAutoScaleMinMaxEnabled());
                 mChart.notifyDataSetChanged();
-                break;
-            }
-            case R.id.actionToggleFilter: {
-
-                // the angle of filtering is 35°
-                Approximator a = new Approximator(ApproximatorType.DOUGLAS_PEUCKER, 35);
-
-                if (!mChart.isFilteringEnabled()) {
-                    mChart.enableFiltering(a);
-                } else {
-                    mChart.disableFiltering();
-                }
-                mChart.invalidate();
                 break;
             }
             case R.id.actionSave: {
@@ -292,7 +274,7 @@ public class InvertedLineChartActivity extends DemoBase implements OnSeekBarChan
         LineDataSet set1 = new LineDataSet(yVals, "DataSet 1");
 
         set1.setLineWidth(1.5f);
-        set1.setCircleSize(4f);
+        set1.setCircleRadius(4f);
 
         // create a data object with the datasets
         LineData data = new LineData(xVals, set1);
