@@ -1,6 +1,9 @@
 
 package com.github.mikephil.charting.renderer;
 
+import java.lang.ref.WeakReference;
+import java.util.List;
+
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -28,9 +31,6 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.utils.MPPointF;
 import com.github.mikephil.charting.utils.Utils;
 import com.github.mikephil.charting.utils.ViewPortHandler;
-
-import java.lang.ref.WeakReference;
-import java.util.List;
 
 public class PieChartRenderer extends DataRenderer {
 
@@ -232,7 +232,7 @@ public class PieChartRenderer extends DataRenderer {
         int visibleAngleCount = 0;
         for (int j = 0; j < entryCount; j++) {
             // draw only if the value is greater than zero
-            if ((Math.abs(dataSet.getEntryForIndex(j).getY()) > Utils.FLOAT_EPSILON)) {
+            if (isSignificantEntry(dataSet.getEntryForIndex(j))) {
                 visibleAngleCount++;
             }
         }
@@ -247,7 +247,7 @@ public class PieChartRenderer extends DataRenderer {
             Entry e = dataSet.getEntryForIndex(j);
 
             // draw only if the value is greater than zero
-            if ((Math.abs(e.getY()) > Utils.FLOAT_EPSILON)) {
+            if (isSignificantEntry(e)) {
 
                 if (!mChart.needsHighlight(j)) {
 
@@ -269,7 +269,7 @@ public class PieChartRenderer extends DataRenderer {
                     float arcStartPointX = center.x + radius * (float) Math.cos(startAngleOuter * Utils.FDEG2RAD);
                     float arcStartPointY = center.y + radius * (float) Math.sin(startAngleOuter * Utils.FDEG2RAD);
 
-                    if (sweepAngleOuter % 360f <= Utils.FLOAT_EPSILON) {
+                    if (false /* sweepAngleOuter % 360f <= Utils.FLOAT_EPSILON */) {
                         // Android is doing "mod 360"
                         mPathBuffer.addCircle(center.x, center.y, radius, Path.Direction.CW);
                     } else {
@@ -378,6 +378,15 @@ public class PieChartRenderer extends DataRenderer {
         }
 
         MPPointF.recycleInstance(center);
+    }
+
+    private boolean isSignificantEntry(Entry entry)
+    {
+        float valueSum = Math.abs(mChart.getData().getYValueSum());
+        if (valueSum != 0f)
+            return (Math.abs(entry.getY()) / valueSum) > 0.0001f;
+        else
+            return true;
     }
 
     @Override
@@ -772,7 +781,7 @@ public class PieChartRenderer extends DataRenderer {
             int visibleAngleCount = 0;
             for (int j = 0; j < entryCount; j++) {
                 // draw only if the value is greater than zero
-                if ((Math.abs(set.getEntryForIndex(j).getY()) > Utils.FLOAT_EPSILON)) {
+                if (isSignificantEntry(set.getEntryForIndex(j))) {
                     visibleAngleCount++;
                 }
             }
@@ -959,7 +968,7 @@ public class PieChartRenderer extends DataRenderer {
             Entry e = dataSet.getEntryForIndex(j);
 
             // draw only if the value is greater than zero
-            if ((Math.abs(e.getY()) > Utils.FLOAT_EPSILON)) {
+            if (isSignificantEntry(e)) {
 
                 float x = (float) ((r - circleRadius)
                         * Math.cos(Math.toRadians((angle + sliceAngle)
